@@ -4,10 +4,53 @@ use strict;
 use Getopt::Long qw(GetOptions);
 use IO::Handle;
 
-our $VERSION = "0.82";
+our $VERSION = "0.83";
 
 sub usage {
-  system "perldoc", $0;
+  print <<HELP;
+    There are three modes:
+
+    1) ttylog tty
+
+    DIRECT (tty): Show terminal output for a given tty to stdout. This means
+    that you will see whatever the user sees.
+
+    2) ttylog -t tty  [ -w file ]
+
+    WRITE (-t tty): Attach to a tty and log the I/O to a trace file for
+    future analysis.
+
+    3) ttylog -r file [ -b file ] [ -i file ] [ -o file ]
+
+    READ (-r file): Analyze a trace file for key strokes or for terminal
+    output or for bandwidth usage.
+
+    OPTIONS:
+
+      --tty tty
+        Specify which psuedo terminal to use
+        Example: --tty pts/1
+      --write file
+        Save the packet data to a file for later analysis
+        Example: --write trace.log
+      --read file
+        Read from a saved packet file
+        Example: --read trace.log
+      --bandwidth file
+        Log network bandwidth used to a file
+        Example: --bandwidth ssh.bytes_log
+      --input file
+        Log keystrokes sent to terminal to a file
+        Example: --input keyboard.log
+      --output file
+        Log terminal output to a file
+        Example: --output terminal.log
+      --help
+        Show this usage message.
+
+    Note that all options may be abbreviated, i.e., "-h" is the same as "--help".
+
+HELP
   exit;
 }
 
@@ -307,6 +350,6 @@ strace(1)
 
 =head1 VERSION
 
-$Id: ttylog,v 1.10 2005/03/11 14:09:36 rob Exp $
+$Id: ttylog,v 1.12 2005/03/17 21:13:11 rob Exp $
 
 =cut

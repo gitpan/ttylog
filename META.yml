@@ -1,6 +1,6 @@
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         ttylog
-version:      0.82
+version:      0.83
 version_from: ttylog
 installdirs:  site
 requires:

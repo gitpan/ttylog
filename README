@@ -105,5 +105,5 @@ SEE ALSO
     w(1) strace(1)
 
 VERSION
-    $Id: ttylog,v 1.10 2005/03/11 14:09:36 rob Exp $
+    $Id: ttylog,v 1.12 2005/03/17 21:13:11 rob Exp $
 

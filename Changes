@@ -1,5 +1,8 @@
 Changes
 =======
 
+0.83   2005-03-17
+       Slight compatibility changes to work with older versions of perl.
+
 0.82   2005-03-11
        First public release.
