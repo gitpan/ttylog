@@ -1,0 +1,109 @@
+NAME
+    ttylog - Log tty sessions
+
+SYNOPSIS
+      ttylog tty
+        or
+      ttylog -t tty  [ -w file ]
+        or
+      ttylog -r file [ -b file ] [ -i file ] [ -o file ]
+
+EXAMPLE
+    Type "w" to obtain the desired tty:
+
+      [root@host root]# w
+        9:01am  up 81 days, 16:06,  5 users,  load average: 0.00, 0.00, 0.00
+      USER     TTY      FROM              LOGIN@   IDLE   JCPU   PCPU  WHAT
+      root     pts/0    admin.com         8:19am  0.00s  0.39s  0.05s  w
+      joe      pts/1    workstation.wi    8:02am 39:33   2.63s  2.19s  pine
+      hacker   pts/4    client.isp.com    8:45am  5.00s 27.95s  1.45s  vim devil.cfg
+      [root@host root]#
+
+    Then connect to monitor what is being typed or what is seen through the
+    tty:
+
+      [root@host root]# ttylog pts/4
+
+OPTIONS
+    There are three modes:
+
+    DIRECT (tty): Show terminal output for a given tty to stdout. This means
+    that you will see whatever the user sees.
+
+    WRITE (-t tty): Attach to a tty and log the I/O to a trace file for
+    future analysis.
+
+    READ (-r file): Analyze a trace file for key strokes or for terminal
+    output or for bandwidth usage.
+
+      --tty tty
+        Specify which psuedo terminal to use
+        Example: --tty pts/1
+      --write file
+        Save the packet data to a file for later analysis
+        Example: --write trace.log
+      --read file
+        Read from a saved packet file
+        Example: --read trace.log
+      --bandwidth file
+        Log network bandwidth used to a file
+        Example: --bandwidth ssh.bytes_log
+      --input file
+        Log keystrokes sent to terminal to a file
+        Example: --input keyboard.log
+      --output file
+        Log terminal output to a file
+        Example: --output terminal.log
+      --help
+        Show this usage message.
+
+    Note that all options may be abbreviated, i.e., "-h" is the same as
+    "--help".
+
+DESCRIPTION
+    This utility is intended for attaching to currently running tty sessions
+    for the purposes of administration, shell assisting, bandwidth tracking,
+    and logging for debugging or training. Unlike other tty sniffers, this
+    utility does not require any patches to the kernel or any system
+    configuration modifications or tweaking. You can even install it AFTER
+    someone has logged in and connect on the fly to instantly view their
+    session which has already been currently running for a long time.
+
+DISCLAIMER
+    Please be sensitive to the privacy of others! The author will not be
+    held liable for any violation of privacy or damage that may be caused by
+    unauthorized use of this utility. It is left to the discretion of the
+    user of this application to deem what is appropriate.
+
+REQUIREMENTS
+    This utility has been designed and is only known with work under the
+    Linux platform, specifically the RedHat flavor, but possibly others. It
+    requires that the strace utility be installed within the PATH. It
+    assumes the tty sessions to be logged have been created from the sshd
+    server. It does not work for terminal logins directly from the console.
+    You must be the root user for permissions to use this program
+    effectively. It is recommended that you have a very large screen and
+    maximize your client because you will be seeing the terminal in the same
+    dimensions as the tty of the user you are connecting to and you might
+    not be able to see everything if your screen is constantly wrapping. The
+    user must type at least one character to begin monitoring. Also, it is
+    not recommended to log your own tty session as it may cause an infinite
+    loop. If you really need to log your session, just send it to a trace
+    file (using -w) and analyze it later (using -r) after your session is
+    finished.
+
+AUTHOR
+      Rob Brown rob@asquad.com
+      A-Squad.Com
+
+COPYRIGHT
+      Copyright 2004-2005
+      All rights reserved
+      Artistic License
+
+SEE ALSO
+    w(1) strace(1)
+
+VERSION
+    $Id: ttylog,v 1.10 2005/03/11 14:09:36 rob Exp $
+
