@@ -4,7 +4,7 @@ use strict;
 use Getopt::Long qw(GetOptions);
 use IO::Handle;
 
-our $VERSION = "0.83";
+our $VERSION = "0.85";
 
 sub usage {
   print <<HELP;
@@ -124,9 +124,52 @@ if ($tty) {
     if ($ps =~ /\n(\S+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+\S+\s+\?\s+\S+\s+\S+\s+\S+\s+\S+[\|\\_ ]+\S*\bsshd\b.*\n\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+$tty\s/) {
       my $user = $1;
       my $pid = $2;
-      warn "DEBUG: Found parent sshd pid [$pid] for user [$user]\n";
-      exec "strace","-e","read,write","-s16384","-x","-o",$write,"-p",$pid
-        or die "exec: $!";
+      pipe(RDERR, WRERR);
+      my $fork = fork();
+      if ($fork) {
+        # Parent process
+        $0 = "waiting for $tty ($fork)";
+        close(WRERR);
+        my $STDERR = "";
+        while (<RDERR>) {
+          if (/^DEBUG:/) {
+            print STDERR;
+          } else {
+            $STDERR .= $_;
+          }
+        }
+        my $wait = waitpid($fork, 0);
+        my $autopsy = $?;
+        my $exit = $autopsy >> 8;
+        my $signal = $autopsy & 127;
+        my $dumped = ($autopsy & 128) >> 7;
+        if ($exit) {
+          if ($STDERR =~ /^exec:/m) {
+            die "strace: FAILED! Could not execute. Not installed?\n";
+          } else {
+            die "strace: [$exit] [$signal] [$dumped] Unknown CRASH!\n$STDERR\n";
+          }
+        }
+        if ($STDERR) {
+          if ($STDERR =~ /attach: ptrace.*PTRACE_ATTACH/) {
+            die "ttylog: FAILED! kernel does not permit ptrace syscall onto $pid!\nttylog: Not enough privileges?\nttylog: Or someone else is already monitoring $tty?\n";
+          }
+          die "strace: Unrecognized behavior!\n$STDERR\n";
+        }
+        # Normal operation
+        warn "\nTTY EOF\n";
+        exit;
+      } elsif (defined $fork) {
+        # Child process
+        close(RDERR);
+        open (STDERR, ">&WRERR");
+        warn "DEBUG: Found parent sshd pid [$pid] for user [$user]\n";
+        exec "strace","-e","read,write","-s16384","-q","-x","-o",$write,"-p",$pid
+          or die "exec: $!";
+      } else {
+        # No process
+        die "UNABLE TO FORK! $!";
+      }
     } else {
       die "Unable to locate corresponding ssh session for [$tty]\n";
     }
@@ -145,23 +188,37 @@ my $fd_terminal = undef;
 if (open TRACE, $read) {
   my $fds = {};
   while (<TRACE>) {
-    #warn "DEBUG: Scanning for I/O fds ...\n";
     if (/(read|write)\((\d+), "(.*)"/) {
-      #warn "DEBUG: Found fd [$2]\n";
-      $fds->{$2} = $1;
-      if (3 <= scalar keys %{ $fds }) {
-        ($fd_bandwidth, $fd_keyboard, $fd_terminal) = sort keys %{ $fds };
+      my $op = $1;
+      my $fd = $2;
+      $fds->{$fd} = { op => $op, data => $3 };
+      my @fds = sort {$a <=> $b} keys %{ $fds };
+      if (3 <= @fds) {
+        ($fd_bandwidth, $fd_keyboard, $fd_terminal) = @fds;
+        last;
+      }
+      if (!$input and
+          2 <= @fds and
+          $op eq "write" and
+          $fd < $fds[1] and
+          $fds->{$fds[1]}->{op} eq "read") {
+        # We don't care about logging keystrokes but found terminal outut.
+        # This is all we need, so just kick out now.
+        ($fd_bandwidth, $fd_terminal) = @fds;
+        my $sent = $fds->{$fds[1]}->{data};
+        chomp $sent;
+        warn "DEBUG: DETECTED TERMINAL OUTPUT: $sent\n";
         last;
       }
     } else {
       warn "DEBUG: Unrecognized trace line: $_";
     }
-    #warn "DEBUG: SETTINGS: b[$fd_bandwidth] k[$fd_keyboard] t[$fd_terminal] ...\n";
   }
 } else {
   die "$read: Could not open for reading: $!\n";
 }
 
+die "ttylog: Unable to determine session parameters from trace data.\n" if !$fd_terminal;
 my $buffer_bytes = 0;
 my $buffer_since = time();
 if ($output) {
@@ -229,13 +286,14 @@ if ($bandwidth && $buffer_bytes) {
     close BYTES;
   }
 }
-warn "\nTTY EOF\n";
 
 =pod
 
 =head1 NAME
 
 ttylog - Log tty sessions
+
+$Id: ttylog,v 1.23 2011/12/19 15:45:41 rob Exp $
 
 =head1 SYNOPSIS
 
@@ -339,7 +397,7 @@ your session is finished.
 
 =head1 COPYRIGHT
 
-  Copyright 2004-2005
+  Copyright 2004-2011
   All rights reserved
   Artistic License
 
@@ -350,6 +408,6 @@ strace(1)
 
 =head1 VERSION
 
-$Id: ttylog,v 1.12 2005/03/17 21:13:11 rob Exp $
+$Id: ttylog,v 1.23 2011/12/19 15:45:41 rob Exp $
 
 =cut

@@ -1,9 +1,10 @@
+# http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         ttylog
-version:      0.83
+version:      0.85
 version_from: ttylog
 installdirs:  site
 requires:
 
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.10_03
+generated_by: ExtUtils::MakeMaker version 6.30

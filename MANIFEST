@@ -1,8 +1,8 @@
 Changes
 INSTALL
 MANIFEST
-META.yml
 Makefile.PL
 README
 t/100_compile.t
 ttylog
+META.yml                                 Module meta-data (added by MakeMaker)

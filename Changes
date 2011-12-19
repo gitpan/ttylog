@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.85   2011-12-19
+       Handle fds > 9 such as the new openssh-4.3p2-72.el5_7.5 uses.
+
+0.84   2005-03-24
+       More gracefully handle common strace failures.
+
 0.83   2005-03-17
        Slight compatibility changes to work with older versions of perl.
 
